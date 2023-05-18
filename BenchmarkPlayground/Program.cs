@@ -4,7 +4,7 @@ namespace BenchmarkPlayground;
 
 internal static class Program
 {
-    private static async Task Main(string[] args)
+    private static void Main(string[] args)
     {
         using var dbContext = new BpDbContext();
         dbContext.Database.EnsureCreated();
@@ -22,6 +22,5 @@ internal static class Program
 
         // Start to Benchmark
         BenchmarkRunner.Run<BenchmarkMethods>();
-       // await new BenchmarkMethods().StreamingWithSkipTakeInQuery();
     }
 }

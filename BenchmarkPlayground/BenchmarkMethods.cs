@@ -10,7 +10,7 @@ public class BenchmarkMethods
 {
     private const int BATCH_SIZE = 10;
 
-    private static Expression<Func<Product, bool>> dataFilter = p => p.Id < 10000;
+    private static Expression<Func<Product, bool>> dataFilter = p => p.Id < 100000;
 
     [Benchmark]
     public async Task StreamingWithSkipTakeInQuery()
@@ -34,6 +34,32 @@ public class BenchmarkMethods
             Console.WriteLine($"{nameof(StreamingWithSkipTakeInQuery)} batch {i} with cnt {batch.Count}");
         }
     }
+
+    [Benchmark]
+    public async Task StreamingWithKeySetPagination()
+    {
+        await using var dbContext = new BpDbContext();
+        var query = dbContext
+            .Products
+            .Where(dataFilter)
+            .OrderBy(x => x.Id)
+            .AsNoTracking();
+
+        var totalCount = await query.CountAsync();
+
+        var lastId = 0;
+        while (lastId < totalCount)
+        {
+            var page = await query
+                .Where(x => x.Id > lastId)
+                .Take(BATCH_SIZE)
+                .ToListAsync();
+
+            lastId = (int)(page.LastOrDefault()?.Id ?? lastId);
+            Console.WriteLine($"StreamingWithKeySetPagination batch with lastId: {lastId} and pageCount: {page.Count}");
+        }
+    }
+
 
     [Benchmark]
     public async Task StreamingWithAsEnumerable()
